@@ -31,21 +31,21 @@ class ExcelConverter:
             # Create a BytesIO object from the file content
             excel_file = io.BytesIO(file_content)
             
-            # Determine the file extension to choose the appropriate engine
-            # Default to 'openpyxl' for xlsx files
-            engine = 'openpyxl'
+            # For compatibility, try different engines
+            engines = ['xlrd', 'openpyxl']
+            all_sheets = None
             
-            # Check the first few bytes to determine if it's an XLS file
-            excel_file.seek(0)
-            header = excel_file.read(8)
-            excel_file.seek(0)
+            for engine in engines:
+                try:
+                    excel_file.seek(0)  # Reset file pointer
+                    all_sheets = pd.ExcelFile(excel_file, engine=engine)
+                    break
+                except Exception as e:
+                    continue
             
-            # XLS files start with D0 CF 11 E0 A1 B1 1A E1
-            if header.startswith(b'\xD0\xCF\x11\xE0'):
-                engine = 'xlrd'
+            if all_sheets is None:
+                raise Exception("Could not read Excel file with any available engine")
             
-            # Get all sheet names from the Excel file
-            all_sheets = pd.ExcelFile(excel_file, engine=engine)
             available_sheets = all_sheets.sheet_names
             
             # Determine which sheets to process
@@ -58,6 +58,7 @@ class ExcelConverter:
             for sheet_name in sheets_to_process:
                 if sheet_name in available_sheets:
                     # Read the sheet into a pandas DataFrame
+                    excel_file.seek(0)  # Reset file pointer
                     df = pd.read_excel(excel_file, sheet_name=sheet_name, engine=engine)
                     
                     # Convert DataFrame to JSON
@@ -94,22 +95,18 @@ class ExcelConverter:
             # Create a BytesIO object from the file content
             excel_file = io.BytesIO(file_content)
             
-            # Determine the file extension to choose the appropriate engine
-            # Default to 'openpyxl' for xlsx files
-            engine = 'openpyxl'
+            # For compatibility, try different engines
+            engines = ['xlrd', 'openpyxl']
             
-            # Check the first few bytes to determine if it's an XLS file
-            excel_file.seek(0)
-            header = excel_file.read(8)
-            excel_file.seek(0)
+            for engine in engines:
+                try:
+                    excel_file.seek(0)  # Reset file pointer
+                    excel = pd.ExcelFile(excel_file, engine=engine)
+                    return excel.sheet_names
+                except Exception as e:
+                    continue
             
-            # XLS files start with D0 CF 11 E0 A1 B1 1A E1
-            if header.startswith(b'\xD0\xCF\x11\xE0'):
-                engine = 'xlrd'
-            
-            # Get all sheet names from the Excel file
-            all_sheets = pd.ExcelFile(excel_file, engine=engine)
-            return all_sheets.sheet_names
+            raise Exception("Could not read Excel file with any available engine")
             
         except Exception as e:
             # Re-raise with more informative message
