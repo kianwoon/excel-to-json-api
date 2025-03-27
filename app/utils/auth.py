@@ -1,13 +1,9 @@
 from fastapi import Security, HTTPException, status
 from fastapi.security.api_key import APIKeyHeader
 import os
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
 
 # API key configuration
-API_KEY = os.getenv("API_KEY")
+API_KEY = os.environ.get("API_KEY")
 API_KEY_NAME = "X-API-Key"
 
 # API key header security scheme

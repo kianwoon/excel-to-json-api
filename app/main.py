@@ -70,13 +70,10 @@ async def general_exception_handler(request, exc):
 if __name__ == "__main__":
     import uvicorn
     import os
-    from dotenv import load_dotenv
-    
-    load_dotenv()
     
     uvicorn.run(
         "app.main:app",
-        host=os.getenv("HOST", "0.0.0.0"),
-        port=int(os.getenv("PORT", 8000)),
-        reload=os.getenv("DEBUG", "False").lower() == "true"
+        host=os.environ.get("HOST", "0.0.0.0"),
+        port=int(os.environ.get("PORT", 8000)),
+        reload=os.environ.get("DEBUG", "False").lower() == "true"
     )
