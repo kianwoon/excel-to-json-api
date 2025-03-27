@@ -38,6 +38,20 @@ async def root():
 async def health_check():
     return {"status": "healthy"}
 
+# Debug endpoint
+@app.get("/debug", include_in_schema=False)
+async def debug():
+    """Debug endpoint to check environment variables (for troubleshooting only)"""
+    import os
+    # Only return a masked version of the API key for security
+    env_vars = {}
+    for key, value in os.environ.items():
+        if key == "API_KEY" and value:
+            env_vars[key] = value[:4] + "****" + value[-4:] if len(value) > 8 else "****"
+        else:
+            env_vars[key] = value
+    return {"env_vars": env_vars}
+
 # Error handlers
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc):
