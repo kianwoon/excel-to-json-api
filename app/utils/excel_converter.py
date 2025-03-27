@@ -2,6 +2,7 @@ import pandas as pd
 import json
 from typing import Dict, Any, List, Optional
 import io
+import os
 
 class ExcelConverter:
     """
@@ -30,8 +31,21 @@ class ExcelConverter:
             # Create a BytesIO object from the file content
             excel_file = io.BytesIO(file_content)
             
+            # Determine the file extension to choose the appropriate engine
+            # Default to 'openpyxl' for xlsx files
+            engine = 'openpyxl'
+            
+            # Check the first few bytes to determine if it's an XLS file
+            excel_file.seek(0)
+            header = excel_file.read(8)
+            excel_file.seek(0)
+            
+            # XLS files start with D0 CF 11 E0 A1 B1 1A E1
+            if header.startswith(b'\xD0\xCF\x11\xE0'):
+                engine = 'xlrd'
+            
             # Get all sheet names from the Excel file
-            all_sheets = pd.ExcelFile(excel_file)
+            all_sheets = pd.ExcelFile(excel_file, engine=engine)
             available_sheets = all_sheets.sheet_names
             
             # Determine which sheets to process
@@ -44,7 +58,7 @@ class ExcelConverter:
             for sheet_name in sheets_to_process:
                 if sheet_name in available_sheets:
                     # Read the sheet into a pandas DataFrame
-                    df = pd.read_excel(excel_file, sheet_name=sheet_name)
+                    df = pd.read_excel(excel_file, sheet_name=sheet_name, engine=engine)
                     
                     # Convert DataFrame to JSON
                     sheet_data = json.loads(df.to_json(orient="records", date_format="iso"))
@@ -77,8 +91,26 @@ class ExcelConverter:
             List of sheet names
         """
         try:
+            # Create a BytesIO object from the file content
             excel_file = io.BytesIO(file_content)
-            excel = pd.ExcelFile(excel_file)
-            return excel.sheet_names
+            
+            # Determine the file extension to choose the appropriate engine
+            # Default to 'openpyxl' for xlsx files
+            engine = 'openpyxl'
+            
+            # Check the first few bytes to determine if it's an XLS file
+            excel_file.seek(0)
+            header = excel_file.read(8)
+            excel_file.seek(0)
+            
+            # XLS files start with D0 CF 11 E0 A1 B1 1A E1
+            if header.startswith(b'\xD0\xCF\x11\xE0'):
+                engine = 'xlrd'
+            
+            # Get all sheet names from the Excel file
+            all_sheets = pd.ExcelFile(excel_file, engine=engine)
+            return all_sheets.sheet_names
+            
         except Exception as e:
+            # Re-raise with more informative message
             raise Exception(f"Error reading Excel sheet names: {str(e)}")
